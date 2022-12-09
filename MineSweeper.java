@@ -115,22 +115,21 @@ class MSModel extends Observable {
         tmp.opened = true;
         if (tmp.bomb) {
             System.out.println("game over");
-            return;
-        }
-        if (tmp.num > 0) {
-            return;
-        }
-        int k, l;
-        for (k = -1; k < 2; k++) {
-            for (l = -1; l < 2; l++) {
-                if (k != 0 || l != 0) {
-                    if (i + k >= 0 && i + k < height && j + l >= 0 && j + l < width) {
-                        tmp = board.get(i + k).get(j + l);
-                        if (!tmp.opened && !tmp.bomb) {
-                            if (tmp.num == 0) {
-                                open(i + k, j + l);
-                            } else {
-                                tmp.opened = true;
+        } else {
+            if (tmp.num == 0) {
+                int k, l;
+                for (k = -1; k < 2; k++) {
+                    for (l = -1; l < 2; l++) {
+                        if (k != 0 || l != 0) {
+                            if (i + k >= 0 && i + k < height && j + l >= 0 && j + l < width) {
+                                tmp = board.get(i + k).get(j + l);
+                                if (!tmp.opened && !tmp.bomb) {
+                                    if (tmp.num == 0) {
+                                        open(i + k, j + l);
+                                    } else {
+                                        tmp.opened = true;
+                                    }
+                                }
                             }
                         }
                     }
