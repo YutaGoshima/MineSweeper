@@ -109,7 +109,17 @@ class MSModel extends Observable {
 
     public void open(int i, int j) {
         Cell tmp = board.get(i).get(j);
+        if (tmp.opened) {
+            return;
+        }
         tmp.opened = true;
+        if (tmp.bomb) {
+            System.out.println("game over");
+            return;
+        }
+        if (tmp.num > 0) {
+            return;
+        }
         int k, l;
         for (k = -1; k < 2; k++) {
             for (l = -1; l < 2; l++) {
@@ -215,19 +225,10 @@ class MSController implements MouseListener {
 
     @Override
     public void mouseClicked(MouseEvent e) {
-        Cell tmp;
         if (e.getButton() == MouseEvent.BUTTON1) {
             int x = e.getX() - 10, y = e.getY() - 10;
             if (x >= 0 && x <= model.getWidth() * 40 && y >= 0 && y <= model.getHeight() * 40) {
-                tmp = model.getCell(y / 40, x / 40);
-                if (!tmp.opened) {
-                    if (tmp.bomb) {
-                        tmp.opened = true;
-                        System.out.println("game over");
-                    } else {
-                        model.open(y / 40, x / 40);
-                    }
-                }
+                model.open(y / 40, x / 40);
             }
         } else {
             int x = e.getX() - 10, y = e.getY() - 10;
