@@ -85,9 +85,9 @@ class MSModel extends Observable {
             }
         }
         for (i = 0; i < b; i++) {
-            j = (int)Math.ceil(Math.random() * w * h);
+            j = (int) Math.ceil(Math.random() * w * h);
             while (board.get(j / w).get(j % w).bomb) {
-                j = (int)Math.ceil(Math.random() * w * h);
+                j = (int) Math.ceil(Math.random() * w * h);
             }
             board.get(j / w).get(j % w).bomb = true;
             for (k = -1; k < 2; k++) {
@@ -191,7 +191,7 @@ class MSView extends JPanel implements Observer {
                 } else {
                     if (tmp.flag == 1) {
                         g.drawString("B", j * 40 + 30, i * 40 + 30);
-                    } else if(tmp.flag == 2) {
+                    } else if (tmp.flag == 2) {
                         g.drawString("?", j * 40 + 30, i * 40 + 30);
                     }
                 }
@@ -203,7 +203,7 @@ class MSView extends JPanel implements Observer {
     public void update(Observable o, Object arg) {
         this.repaint();
     }
-    
+
 }
 
 class MSController implements MouseListener {
@@ -240,25 +240,25 @@ class MSController implements MouseListener {
     @Override
     public void mousePressed(MouseEvent e) {
         // TODO Auto-generated method stub
-        
+
     }
 
     @Override
     public void mouseReleased(MouseEvent e) {
         // TODO Auto-generated method stub
-        
+
     }
 
     @Override
     public void mouseEntered(MouseEvent e) {
         // TODO Auto-generated method stub
-        
+
     }
 
     @Override
     public void mouseExited(MouseEvent e) {
         // TODO Auto-generated method stub
-        
+
     }
 
 }
@@ -276,6 +276,6 @@ class MineSweeper extends JFrame {
     }
 
     public static void main(String argv[]) {
-        MineSweeper ms = new MineSweeper();
+        new MineSweeper();
     }
 }
