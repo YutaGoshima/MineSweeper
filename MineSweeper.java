@@ -1,13 +1,55 @@
 import javax.swing.JFrame;
 import javax.swing.JPanel;
 
+import java.awt.Color;
+import java.awt.Dimension;
 import java.awt.GridLayout;
 import java.awt.Graphics;
-import java.awt.Dimension;
-import java.awt.Color;
 import java.awt.event.MouseListener;
 import java.awt.event.MouseEvent;
 
+import java.util.ArrayList;
+
+class Observable {
+
+    private ArrayList<Observer> observers = new ArrayList<Observer>();
+    private Boolean changed = false;
+
+    public void addObserver(Observer observer) {
+        observers.add(observer);
+    }
+
+    public void deleteObserver(Observer observer) {
+        observers.remove(observer);
+    }
+
+    public void setChanged() {
+        changed = true;
+    }
+
+    public void notifyObservers() {
+        if (changed) {
+            for (Observer observer : observers) {
+                observer.update(this, null);
+            }
+            changed = false;
+        }
+    }
+
+    public void notifyObservers(Object arg) {
+        if (changed) {
+            for (Observer observer : observers) {
+                observer.update(this, arg);
+            }
+            changed = false;
+        }
+    }
+
+}
+
+interface Observer {
+    public void update(Observable o, Object arg);
+}
 
 class Cell {
     protected boolean opened;
@@ -23,88 +65,134 @@ class Cell {
     }
 }
 
-class Board extends JPanel implements MouseListener {
-    private Cell[][] board;
+class MSModel extends Observable {
+    private ArrayList<ArrayList<Cell>> board;
+    private int width;
+    private int height;
+    private int bomb;
+    private Cell tmp;
 
-    public Board() {
-        this.board = new Cell[16][16];
-        int i, j, n = 6, k, l;
-        for (i = 0; i < 16; i++) {
-            for (j = 0; j < 16; j++) {
-                board[i][j] = new Cell();
+    public MSModel(int w, int h, int b) {
+        width = w;
+        height = h;
+        bomb = b;
+        board = new ArrayList<ArrayList<Cell>>();
+        int i, j, k, l;
+        for (i = 0; i < h; i++) {
+            board.add(new ArrayList<Cell>());
+            for (j = 0; j < w; j++) {
+                board.get(i).add(new Cell());
             }
         }
-        for (i = 0; i < 16; i++) {
-            for (j = 0; j < 16; j++) {
-                if (n > 0 && Math.random() < 0.0234375) {
-                    board[i][j].bomb = true;
-                    for (k = -1; k < 2; k++) {
-                        for (l = -1; l < 2; l++) {
-                            if (k != 0 || l != 0) {
-                                if (i + k >= 0 && i + k < 16 && j + l >= 0 && j + l < 16) {
-                                    board[i + k][j + l].num += 1;
-                                }
-                            }
+        for (i = 0; i < b; i++) {
+            j = (int)Math.ceil(Math.random() * w * h);
+            while (board.get(j / w).get(j % w).bomb) {
+                j = (int)Math.ceil(Math.random() * w * h);
+            }
+            board.get(j / w).get(j % w).bomb = true;
+            for (k = -1; k < 2; k++) {
+                for (l = -1; l < 2; l++) {
+                    if (j / w + k >= 0 && j / w + k < h && j % w + l >= 0 && j % w + l < w) {
+                        tmp = board.get(j / w + k).get(j % w + l);
+                        if (!tmp.bomb) {
+                            tmp.num += 1;
                         }
                     }
-                    n -= 1;
-                }
-                if (board[i][j].bomb) {
-                    //this.add(new JPanel());
-                } else {
-                    //this.add(new JPanel());
                 }
             }
         }
-        this.setLayout(new GridLayout(16, 16));
-        this.setPreferredSize(new Dimension(660, 660));
-        this.addMouseListener(this);
     }
 
-    public void paintComponent(Graphics g) {
-        g.setColor(Color.white);
-        g.fillRect(0, 0, 660, 660);
-
-        g.setColor(Color.black);
-        int i, j;
-        for (i = 0; i < 17; i++) {
-            g.drawLine(10, i * 40 + 10, 650, i * 40 + 10);
-            g.drawLine(i * 40 + 10, 10, i * 40 + 10, 650);
-        }
-
-        for (i = 0; i < 16; i++) {
-            for (j = 0; j < 16; j++) {
-                if (board[i][j].opened) {
-                    if (this.board[i][j].bomb) {
-                        g.drawString(board[i][j].num + " b", i * 40 + 30, j * 40 + 30);
-                    } else {
-                        g.drawString(board[i][j].num + "", i * 40 + 30, j * 40 + 30);
-                    }
-                } else {
-                    if (this.board[i][j].flag == 1) {
-                        g.drawString("B", i * 40 + 30, j * 40 + 30);
-                    } else if(this.board[i][j].flag == 2) {
-                        g.drawString("?", i * 40 + 30, j * 40 + 30);
-                    }
-                }
-            }
-        }
+    public Cell getCell(int i, int j) {
+        return board.get(i).get(j);
     }
 
     public void open(int i, int j) {
-        board[i][j].opened = true;
+        Cell tmp = board.get(i).get(j);
+        tmp.opened = true;
         int k, l;
         for (k = -1; k < 2; k++) {
             for (l = -1; l < 2; l++) {
                 if (k != 0 || l != 0) {
-                    if (i + k >= 0 && i + k < 16 && j + l >= 0 && j + l < 16) {
-                        if (!board[i + k][j + l].opened && !board[i + k][j + l].bomb) {
-                            if (board[i + k][j + l].num == 0) {
+                    if (i + k >= 0 && i + k < height && j + l >= 0 && j + l < width) {
+                        tmp = board.get(i + k).get(j + l);
+                        if (!tmp.opened && !tmp.bomb) {
+                            if (tmp.num == 0) {
                                 open(i + k, j + l);
                             } else {
-                                board[i + k][j + l].opened = true;
+                                tmp.opened = true;
                             }
                         }
+                    }
+                }
+            }
+        }
+        setChanged();
+        notifyObservers();
+    }
+
+    public void flag(int i, int j) {
+        Cell tmp = board.get(i).get(j);
+        if (!tmp.opened) {
+            tmp.flag = (tmp.flag + 1) % 3;
+            setChanged();
+            notifyObservers();
+        }
+    }
+
+    public int getWidth() {
+        return width;
+    }
+
+    public int getHeight() {
+        return height;
+    }
+
+    public int getBomb() {
+        return bomb;
+    }
+}
+
+class MSView extends JPanel implements Observer {
+    private MSModel model;
+    private MSController controller;
+
+    public MSView(MSModel mm, MSController mc) {
+        model = mm;
+        controller = mc;
+        mm.addObserver(this);
+        this.setLayout(new GridLayout(model.getHeight(), model.getWidth()));
+        this.setPreferredSize(new Dimension(model.getWidth() * 40 + 20, model.getHeight() * 40 + 20));
+        this.addMouseListener(mc);
+    }
+
+    public void paintComponent(Graphics g) {
+        g.setColor(Color.white);
+        g.fillRect(0, 0, model.getWidth() * 40 + 20, model.getHeight() * 40 + 20);
+
+        g.setColor(Color.black);
+        int i, j;
+        for (i = 0; i < model.getHeight() + 2; i++) {
+            g.drawLine(10, i * 40 + 10, model.getWidth() * 40 + 10, i * 40 + 10);
+        }
+        for (i = 0; i < model.getWidth() + 2; i++) {
+            g.drawLine(i * 40 + 10, 10, i * 40 + 10, model.getHeight() * 40 + 10);
+        }
+        Cell tmp;
+        for (i = 0; i < model.getHeight(); i++) {
+            for (j = 0; j < model.getWidth(); j++) {
+                tmp = model.getCell(i, j);
+                if (tmp.opened) {
+                    if (tmp.bomb) {
+                        g.drawString(tmp.num + " b", j * 40 + 30, i * 40 + 30);
+                    } else {
+                        g.drawString(tmp.num + "", j * 40 + 30, i * 40 + 30);
+                    }
+                } else {
+                    if (tmp.flag == 1) {
+                        g.drawString("B", j * 40 + 30, i * 40 + 30);
+                    } else if(tmp.flag == 2) {
+                        g.drawString("?", j * 40 + 30, i * 40 + 30);
                     }
                 }
             }
@@ -112,28 +200,41 @@ class Board extends JPanel implements MouseListener {
     }
 
     @Override
+    public void update(Observable o, Object arg) {
+        this.repaint();
+    }
+    
+}
+
+class MSController implements MouseListener {
+    private MSModel model;
+
+    public MSController(MSModel mm) {
+        model = mm;
+    }
+
+    @Override
     public void mouseClicked(MouseEvent e) {
+        Cell tmp;
         if (e.getButton() == MouseEvent.BUTTON1) {
             int x = e.getX() - 10, y = e.getY() - 10;
-            if (x >= 0 && x <= 640 && y >= 0 && y <= 640) {
-                if (!board[x / 40][y / 40].opened) {
-                    if (board[x / 40][y / 40].bomb) {
-                        board[x / 40][y / 40].opened = true;
+            if (x >= 0 && x <= model.getWidth() * 40 && y >= 0 && y <= model.getHeight() * 40) {
+                tmp = model.getCell(y / 40, x / 40);
+                if (!tmp.opened) {
+                    if (tmp.bomb) {
+                        tmp.opened = true;
                         System.out.println("game over");
                     } else {
-                        open(x / 40, y / 40);
+                        model.open(y / 40, x / 40);
                     }
                 }
             }
         } else {
             int x = e.getX() - 10, y = e.getY() - 10;
-            if (x >= 0 && x <= 640 && y >= 0 && y <= 640) {
-                if (!board[x / 40][y / 40].opened) {
-                    board[x / 40][y / 40].flag = (board[x / 40][y / 40].flag + 1) % 3;
-                }
+            if (x >= 0 && x <= model.getWidth() * 40 && y >= 0 && y <= model.getHeight() * 40) {
+                model.flag(y / 40, x / 40);
             }
         }
-        this.repaint();
     }
 
     @Override
@@ -159,12 +260,16 @@ class Board extends JPanel implements MouseListener {
         // TODO Auto-generated method stub
         
     }
+
 }
 
 class MineSweeper extends JFrame {
     public MineSweeper() {
+        MSModel model = new MSModel(8, 8, 8);
+        MSController controller = new MSController(model);
+        MSView view = new MSView(model, controller);
         this.setTitle("MineSweeper");
-        this.getContentPane().add(new Board());
+        this.getContentPane().add(view);
         this.pack();
         this.setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
         this.setVisible(true);
